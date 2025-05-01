@@ -73,6 +73,25 @@ class InputManager:
             sound_idx, sound_type = self.sequencer.change_sound_type(-1)
             print(f"音色変更: {sound_idx} ({sound_type})")
 
+        # テンポ変更（hとlキーまたはゲームパッド右スティック左右）
+        if self._is_key_pressed(pyxel.KEY_L):
+            new_tempo = self.sequencer.change_tempo(1)
+            print(f"テンポ上げ: {new_tempo} BPM")
+
+        if self._is_key_pressed(pyxel.KEY_H):
+            new_tempo = self.sequencer.change_tempo(-1)
+            print(f"テンポ下げ: {new_tempo} BPM")
+
+        # テンポ変更 - ゲームパッド右スティック左右
+        right_x = pyxel.btnv(pyxel.GAMEPAD1_AXIS_RIGHTX)
+        if self._is_analog_triggered(pyxel.GAMEPAD1_AXIS_RIGHTX, right_x, self.ANALOG_THRESHOLD):
+            if right_x > 0:  # 右
+                new_tempo = self.sequencer.change_tempo(1)
+                print(f"テンポ上げ: {new_tempo} BPM")
+            else:  # 左
+                new_tempo = self.sequencer.change_tempo(-1)
+                print(f"テンポ下げ: {new_tempo} BPM")
+
         # 編集モードの操作
         if self.mode == 0:
             self._handle_edit_mode()
@@ -198,6 +217,8 @@ class InputManager:
             pyxel.KEY_RETURN,
             pyxel.KEY_J,
             pyxel.KEY_K,
+            pyxel.KEY_H,
+            pyxel.KEY_L,
         ]:
             if pyxel.btn(key):
                 self.prev_keys[key] = True

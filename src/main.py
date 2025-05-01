@@ -81,10 +81,13 @@ class PicoPixel:
         # オクターブ表示
         pyxel.text(5, self.GRID_Y + self.GRID_HEIGHT + 20, f"Oct: {self.sequencer.current_octave}", self.COLOR_TEXT)
 
+        # テンポ表示
+        pyxel.text(45, self.GRID_Y + self.GRID_HEIGHT + 20, f"Tempo: {self.sequencer.tempo}", self.COLOR_TEXT)
+
         # 音色タイプ表示
         sound_types = ["Triangle", "Square", "Pulse", "Noise"]
         sound_type = sound_types[self.sequencer.current_sound_type]
-        pyxel.text(80, self.GRID_Y + self.GRID_HEIGHT + 20, f"Sound: {sound_type}", self.COLOR_TEXT)
+        pyxel.text(110, self.GRID_Y + self.GRID_HEIGHT + 20, f"Sound: {sound_type}", self.COLOR_TEXT)
 
     def _draw_sequencer_grid(self):
         """シーケンサーグリッドの描画"""

@@ -32,6 +32,11 @@ class Sequencer:
     MIN_OCTAVE = 0
     MAX_OCTAVE = 4  # Pyxelでは0-4のみサポート
 
+    # テンポ範囲
+    MIN_TEMPO = 60  # 最小BPM
+    MAX_TEMPO = 240  # 最大BPM
+    TEMPO_STEP = 10  # テンポ変更の刻み幅
+
     def __init__(self):
         """シーケンサーの初期化"""
         # 16ステップのシーケンスデータ（初期値はすべてNone=無音）
@@ -41,7 +46,7 @@ class Sequencer:
         self.current_step = 0
         # 再生状態フラグ
         self.playing = False
-        # テンポ（BPM）- 固定値
+        # テンポ（BPM）
         self.tempo = 120
         # 前回のフレーム時間（テンポ計算用）
         self.last_frame_time = 0
@@ -182,3 +187,16 @@ class Sequencer:
         new_idx = (current_idx + delta) % len(self.all_notes)
         self.current_note = self.all_notes[new_idx]
         return self.current_note
+
+    def change_tempo(self, delta):
+        """
+        テンポを変更する
+
+        Args:
+            delta: 変更量（+1または-1）
+        """
+        # テンポを変更（TEMPO_STEPの倍数で変更）
+        new_tempo = self.tempo + (delta * self.TEMPO_STEP)
+        # 範囲内に収める
+        self.tempo = max(self.MIN_TEMPO, min(self.MAX_TEMPO, new_tempo))
+        return self.tempo
