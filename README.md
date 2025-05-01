@@ -24,7 +24,7 @@ uv pip install -r requirements.txt
 2. アプリケーションを起動します：
 
 ```bash
-uv run src/main.py
+uv run picopyxel/main.py
 ```
 
 ## 実機転送方法
