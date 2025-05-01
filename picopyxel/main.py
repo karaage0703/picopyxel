@@ -46,8 +46,8 @@ class PicoPixel:
 
     def update(self):
         """状態更新（毎フレーム呼び出し）"""
-        # 終了判定（ESCキー）
-        if pyxel.btnp(pyxel.KEY_ESCAPE):
+        # 終了判定（ESCキーまたはSTARTボタン）
+        if pyxel.btnp(pyxel.KEY_ESCAPE) or pyxel.btnp(pyxel.GAMEPAD1_BUTTON_START):
             pyxel.quit()
 
         # 入力処理

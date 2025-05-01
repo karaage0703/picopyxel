@@ -38,8 +38,8 @@ class InputManager:
         毎フレーム呼び出される
         """
 
-        # 再生/停止切り替え（スペースキーまたはSTARTボタン）
-        if self._is_key_pressed(pyxel.KEY_SPACE) or self._is_gamepad_button_pressed(pyxel.GAMEPAD1_BUTTON_START):
+        # 再生/停止切り替え（スペースキーまたはAボタン）
+        if self._is_key_pressed(pyxel.KEY_SPACE) or self._is_gamepad_button_pressed(pyxel.GAMEPAD1_BUTTON_A):
             self.sequencer.toggle_play()
 
         # 音階選択（上下キーまたはゲームパッド十字キー上下）
@@ -128,8 +128,8 @@ class InputManager:
             self.sequencer.input_note(self.selected_step)
             print(f"音階入力: {self.sequencer.current_note} (オクターブ: {self.sequencer.current_octave})")
 
-        # 音階入力 - ゲームパッド（Aボタン）
-        if self._is_gamepad_button_pressed(pyxel.GAMEPAD1_BUTTON_A):
+        # 音階入力 - ゲームパッド（Bボタン）
+        if self._is_gamepad_button_pressed(pyxel.GAMEPAD1_BUTTON_B):
             self.sequencer.input_note(self.selected_step)
             print(f"音階入力: {self.sequencer.current_note} (オクターブ: {self.sequencer.current_octave})")
 
