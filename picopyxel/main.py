@@ -21,9 +21,6 @@ class PicoPixel:
         # Pyxel初期化
         pyxel.init(self.WIDTH, self.HEIGHT, title="PicoPixel", fps=30)
 
-        # サウンド設定
-        self._setup_sounds()
-
         # シーケンサーとインプットマネージャーの初期化
         self.sequencer = Sequencer()
         self.input_manager = InputManager(self.sequencer)
@@ -44,55 +41,13 @@ class PicoPixel:
         self.GRID_WIDTH = 16 * self.CELL_WIDTH
         self.GRID_HEIGHT = 8 * self.CELL_HEIGHT
 
-        # 音階表示位置
-        self.notes = ["ド+", "シ", "ラ", "ソ", "ファ", "ミ", "レ", "ド"]
-
         # Pyxelアプリ実行
         pyxel.run(self.update, self.draw)
 
-    def _setup_sounds(self):
-        """サウンド設定"""
-        # 矩形波（四角波）の音色を設定
-        # 音色0: 通常の矩形波
-        pyxel.sounds[0].set(
-            "c2c2",  # note
-            "s",  # tone
-            "5",  # volume
-            "n",  # effect
-            15,  # speed
-        )
-
-        # 音色1: ビブラート付き矩形波
-        pyxel.sounds[1].set(
-            "c2c2",  # note
-            "s",  # tone
-            "5",  # volume
-            "v",  # effect
-            15,  # speed
-        )
-
-        # 音色2: フェードアウト付き矩形波
-        pyxel.sounds[2].set(
-            "c2c2",  # note
-            "s",  # tone
-            "5",  # volume
-            "f",  # effect
-            15,  # speed
-        )
-
-        # 音色3: ノイズ
-        pyxel.sounds[3].set(
-            "c2c2",  # note
-            "n",  # tone
-            "5",  # volume
-            "n",  # effect
-            15,  # speed
-        )
-
     def update(self):
         """状態更新（毎フレーム呼び出し）"""
-        # 終了判定（ESCキー）
-        if pyxel.btnp(pyxel.KEY_ESCAPE):
+        # 終了判定（ESCキーまたはSTARTボタン）
+        if pyxel.btnp(pyxel.KEY_ESCAPE) or pyxel.btnp(pyxel.GAMEPAD1_BUTTON_START):
             pyxel.quit()
 
         # 入力処理
@@ -107,8 +62,8 @@ class PicoPixel:
         pyxel.cls(self.COLOR_BG)
 
         # タイトル描画
+        # タイトルのみ表示
         pyxel.text(5, 5, "PicoPixel - 8bit Music Sequencer", self.COLOR_TEXT)
-        pyxel.text(5, 15, "SPACE: Play/Stop  ARROWS: Move  Z-B: Input Note", self.COLOR_TEXT)
 
         # シーケンサーグリッド描画
         self._draw_sequencer_grid()
@@ -118,16 +73,33 @@ class PicoPixel:
         pyxel.text(5, self.GRID_Y + self.GRID_HEIGHT + 10, f"Status: {status}", self.COLOR_TEXT)
 
         # 選択中のステップ表示
-        pyxel.text(80, self.GRID_Y + self.GRID_HEIGHT + 10, f"Step: {self.input_manager.selected_step + 1}", self.COLOR_TEXT)
+        pyxel.text(70, self.GRID_Y + self.GRID_HEIGHT + 10, f"Step: {self.input_manager.selected_step + 1}", self.COLOR_TEXT)
+
+        # 現在選択中の音階表示
+        pyxel.text(110, self.GRID_Y + self.GRID_HEIGHT + 10, f"Note: {self.sequencer.current_note}", self.COLOR_TEXT)
+
+        # オクターブ表示
+        pyxel.text(5, self.GRID_Y + self.GRID_HEIGHT + 20, f"Oct: {self.sequencer.current_octave}", self.COLOR_TEXT)
+
+        # テンポ表示
+        pyxel.text(45, self.GRID_Y + self.GRID_HEIGHT + 20, f"Tempo: {self.sequencer.tempo}", self.COLOR_TEXT)
+
+        # 音色タイプ表示
+        sound_types = ["Triangle", "Square", "Pulse", "Noise"]
+        sound_type = sound_types[self.sequencer.current_sound_type]
+        pyxel.text(110, self.GRID_Y + self.GRID_HEIGHT + 20, f"Sound: {sound_type}", self.COLOR_TEXT)
 
     def _draw_sequencer_grid(self):
         """シーケンサーグリッドの描画"""
         # グリッド背景
         pyxel.rectb(self.GRID_X - 1, self.GRID_Y - 1, self.GRID_WIDTH + 2, self.GRID_HEIGHT + 2, self.COLOR_GRID)
 
-        # 音階ラベル描画
-        for i, note in enumerate(self.notes):
-            pyxel.text(self.GRID_X - 9, self.GRID_Y + i * self.CELL_HEIGHT + 1, note, self.COLOR_TEXT)
+        # 音階ラベル描画（全12音階）
+        note_names = ["B", "A#", "A", "G#", "G", "F#", "F", "E", "D#", "D", "C#", "C"]
+        for i, note in enumerate(note_names):
+            # 現在選択中の音階は強調表示
+            color = self.COLOR_ACTIVE if note == self.sequencer.current_note else self.COLOR_TEXT
+            pyxel.text(self.GRID_X - 9, self.GRID_Y + i * (self.CELL_HEIGHT * 8 / 12) + 1, note, color)
 
         # ステップ番号描画
         for i in range(16):
@@ -136,9 +108,9 @@ class PicoPixel:
 
         # 各セル描画
         for x in range(16):
-            for y in range(8):
+            for y in range(12):  # 12音階に対応
                 cell_x = self.GRID_X + x * self.CELL_WIDTH
-                cell_y = self.GRID_Y + y * self.CELL_HEIGHT
+                cell_y = self.GRID_Y + y * (self.CELL_HEIGHT * 8 / 12)  # 高さを調整
 
                 # セルの背景色決定
                 if x == self.sequencer.current_step and self.sequencer.playing:
@@ -155,9 +127,18 @@ class PicoPixel:
                 pyxel.rect(cell_x, cell_y, self.CELL_WIDTH - 1, self.CELL_HEIGHT - 1, cell_color)
 
                 # 音符があれば描画
-                note_idx = 7 - y  # 音階は下から上へ
-                if self.sequencer.steps[x] == self.notes[y]:
-                    pyxel.rect(cell_x + 1, cell_y + 1, self.CELL_WIDTH - 3, self.CELL_HEIGHT - 3, self.COLOR_NOTE)
+                step_data = self.sequencer.steps[x]
+                if step_data is not None:
+                    note, octave, sound_type = step_data
+
+                    # 音階が一致するか確認（オクターブは考慮しない）
+                    if note == note_names[y]:
+                        # 音色タイプに応じて色を変える
+                        note_color = self.COLOR_NOTE + sound_type
+                        pyxel.rect(cell_x + 1, cell_y + 1, self.CELL_WIDTH - 3, self.CELL_HEIGHT * 8 / 12 - 3, note_color)
+
+                        # オクターブ表示（小さい数字）
+                        pyxel.text(cell_x + 2, cell_y + 2, str(octave), self.COLOR_TEXT)
 
 
 if __name__ == "__main__":

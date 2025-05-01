@@ -17,15 +17,16 @@
 #### 1.3.1 ミニマム版機能
 - 1トラック構成
 - 16ステップシーケンス
-- 8音階入力（ドレミファソラシド）
+- 全音階入力（半音を含む12音階）
+- オクターブ変更機能（0-4）
+- 音色タイプ切替機能（三角波、矩形波、パルス波、ノイズ）
 - キーボード＆ゲームパッド操作対応
 - 再生・停止機能
-- 一定テンポ固定再生
+- テンポ変更機能（60-240 BPM）
 
 #### 1.3.2 将来的な拡張予定機能
-- マルチトラック対応（最大4トラック程度）
-- 音色選択機能（ノイズ、矩形波などPyxel標準サウンド）
-- テンポ変更機能
+- マルチトラック対応（最大4トラック）
+- 音色パラメータ詳細設定機能
 - エフェクト追加（ビブラート、ピッチシフトなど）
 - パターンエディット／パターンチェイン
 - ソングモード（曲構成管理）
@@ -85,27 +86,70 @@
 ```python
 class Sequencer:
     def __init__(self):
-        self.steps = [None for _ in range(16)]
+        self.steps = [None for _ in range(16)]  # (音階, オクターブ, 音色) のタプル
         self.current_step = 0
         self.playing = False
+        self.tempo = 120  # BPM
+        self.current_note = "C"  # 現在選択中の音階
+        self.current_octave = 4  # 現在選択中のオクターブ
+        self.current_sound_type = 0  # 現在選択中の音色タイプ
 
     def update(self):
+        # テンポに基づいてステップを進める
         pass
 
     def toggle_play(self):
+        # 再生/停止を切り替える
         pass
 
-    def input_note(self, step_idx, note):
+    def input_note(self, step_idx, note=None):
+        # 指定したステップに音階を入力する
+        pass
+
+    def change_octave(self, delta):
+        # オクターブを変更する
+        pass
+
+    def change_sound_type(self, delta):
+        # 音色タイプを変更する
+        pass
+
+    def change_note(self, delta):
+        # 音階を変更する
+        pass
+
+    def change_tempo(self, delta):
+        # テンポを変更する
         pass
 ```
 
 ##### InputManagerクラス
 ```python
 class InputManager:
-    def __init__(self):
-        pass
+    def __init__(self, sequencer):
+        self.sequencer = sequencer
+        self.selected_step = 0
+        self.mode = 0  # 編集モード
+        self.using_gamepad = False  # ゲームパッド使用フラグ
 
     def update(self):
+        # 入力状態を更新する
+        pass
+
+    def _handle_edit_mode(self):
+        # 編集モードの入力処理
+        pass
+
+    def _is_key_pressed(self, key):
+        # キーが押されたかどうかを判定
+        pass
+
+    def _is_gamepad_button_pressed(self, button):
+        # ゲームパッドボタンが押されたかどうかを判定
+        pass
+
+    def _is_analog_triggered(self, axis, value, threshold):
+        # アナログ入力が閾値を超えて変化したかを判定
         pass
 ```
 
@@ -120,9 +164,10 @@ class InputManager:
 - ステップアクセスエラー
 
 ### 2.3 インターフェース設計
-- 16ステップ表示
-- 現在位置ハイライト
-- 操作説明テキスト表示
+- 16ステップ×12音階表示
+- 現在再生位置ハイライト
+- 現在選択中の音階ハイライト
+- 再生状態、選択中のステップ、オクターブ、テンポ、音色タイプ表示
 
 ### 2.4 セキュリティ設計
 - 異常時でもクラッシュしない作り
