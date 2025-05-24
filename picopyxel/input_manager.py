@@ -108,16 +108,18 @@ class InputManager:
                 new_tempo = self.sequencer.change_tempo(-1)
                 print(f"テンポ下げ: {new_tempo} BPM")
 
-        # トラック切り替え（[と]キーまたはゲームパッドのLRボタン）
-        if self._is_key_pressed(pyxel.KEY_RIGHTBRACKET) or self._is_gamepad_button_pressed(
-            pyxel.GAMEPAD1_BUTTON_RIGHTSHOULDER
+        # トラック切り替え（[と]キー、またはパターン編集モード以外ではゲームパッドのLRボタン）
+        if self._is_key_pressed(pyxel.KEY_RIGHTBRACKET) or (
+            self._is_gamepad_button_pressed(pyxel.GAMEPAD1_BUTTON_RIGHTSHOULDER) and self.mode != self.MODE_PATTERN_EDIT
         ):
-            # すべてのモードでトラック切り替えを可能に
+            # キーボードはすべてのモードで、ゲームパッドはパターン編集モード以外でトラック切り替え
             new_track = self.sequencer.change_track(1)
             print(f"トラック変更: {new_track}")
 
-        if self._is_key_pressed(pyxel.KEY_LEFTBRACKET) or self._is_gamepad_button_pressed(pyxel.GAMEPAD1_BUTTON_LEFTSHOULDER):
-            # すべてのモードでトラック切り替えを可能に
+        if self._is_key_pressed(pyxel.KEY_LEFTBRACKET) or (
+            self._is_gamepad_button_pressed(pyxel.GAMEPAD1_BUTTON_LEFTSHOULDER) and self.mode != self.MODE_PATTERN_EDIT
+        ):
+            # キーボードはすべてのモードで、ゲームパッドはパターン編集モード以外でトラック切り替え
             new_track = self.sequencer.change_track(-1)
             print(f"トラック変更: {new_track}")
 

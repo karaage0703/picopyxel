@@ -95,7 +95,7 @@ class PicoPixel:
         # 再生状態表示
         status = "PLAYING" if self.sequencer.playing else "STOPPED"
         song_mode = " (SONG)" if self.sequencer.song_mode else " (PATTERN)"
-        pyxel.text(5, self.GRID_Y + self.GRID_HEIGHT + 5, f"Status: {status}{song_mode}", self.COLOR_TEXT)
+        pyxel.text(5, self.GRID_Y + self.GRID_HEIGHT + 4, f"Status: {status}{song_mode}", self.COLOR_TEXT)
 
         # 選択中のステップ表示（パターン編集モードのみ）
         if self.input_manager.mode == self.input_manager.MODE_PATTERN_EDIT:
