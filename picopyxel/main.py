@@ -162,8 +162,9 @@ class PicoPixel:
 
                         # 音階が一致するか確認（オクターブは考慮しない）
                         if note == note_names[y]:
-                            # トラックに応じた色を使用
-                            note_color = self.TRACK_COLORS[track_idx]
+                            # 音色タイプに応じた色を使用
+                            sound_colors = [11, 10, 9, 8]  # 水色、緑、オレンジ、灰色
+                            note_color = sound_colors[sound_type]
 
                             # 現在のトラックの音符は少し大きく表示
                             if track_idx == self.sequencer.current_track:
