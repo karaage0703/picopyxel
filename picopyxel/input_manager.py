@@ -65,29 +65,16 @@ class InputManager:
                 new_note = self.sequencer.change_note(-1)
                 print(f"音階下げ: {new_note}")
 
-        # オクターブ変更（PageUp/PageDownキーまたはゲームパッドLRボタン）- パターン編集モードのみ
-        if self.mode == self.MODE_PATTERN_EDIT:
-            if self._is_key_pressed(pyxel.KEY_PAGEUP) or self._is_gamepad_button_pressed(pyxel.GAMEPAD1_BUTTON_RIGHTSHOULDER):
-                new_octave = self.sequencer.change_octave(1)
-                print(f"オクターブ上げ: {new_octave}")
+        # オクターブ変更（PageUp/PageDownキーまたはゲームパッドLRボタン）
+        if self._is_key_pressed(pyxel.KEY_PAGEUP) or self._is_gamepad_button_pressed(pyxel.GAMEPAD1_BUTTON_RIGHTSHOULDER):
+            new_octave = self.sequencer.change_octave(1)
+            print(f"オクターブ上げ: {new_octave}")
 
-            if self._is_key_pressed(pyxel.KEY_PAGEDOWN) or self._is_gamepad_button_pressed(pyxel.GAMEPAD1_BUTTON_LEFTSHOULDER):
-                new_octave = self.sequencer.change_octave(-1)
-                print(f"オクターブ下げ: {new_octave}")
+        if self._is_key_pressed(pyxel.KEY_PAGEDOWN) or self._is_gamepad_button_pressed(pyxel.GAMEPAD1_BUTTON_LEFTSHOULDER):
+            new_octave = self.sequencer.change_octave(-1)
+            print(f"オクターブ下げ: {new_octave}")
 
-        # 音色タイプ変更（jとkキーまたはゲームパッドトリガー）- パターン編集モードのみ
-        if self.mode == self.MODE_PATTERN_EDIT:
-            if self._is_key_pressed(pyxel.KEY_K) or self._is_analog_triggered(
-                pyxel.GAMEPAD1_AXIS_TRIGGERRIGHT, pyxel.btnv(pyxel.GAMEPAD1_AXIS_TRIGGERRIGHT), self.ANALOG_THRESHOLD
-            ):
-                sound_idx, sound_type = self.sequencer.change_sound_type(1)
-                print(f"音色変更: {sound_idx} ({sound_type})")
-
-            if self._is_key_pressed(pyxel.KEY_J) or self._is_analog_triggered(
-                pyxel.GAMEPAD1_AXIS_TRIGGERLEFT, pyxel.btnv(pyxel.GAMEPAD1_AXIS_TRIGGERLEFT), self.ANALOG_THRESHOLD
-            ):
-                sound_idx, sound_type = self.sequencer.change_sound_type(-1)
-                print(f"音色変更: {sound_idx} ({sound_type})")
+        # 音色タイプはトラックごとに固定されるため、この機能は不要になります
 
         # テンポ変更（hとlキーまたはゲームパッド右スティック左右）
         if self._is_key_pressed(pyxel.KEY_L):
@@ -108,22 +95,20 @@ class InputManager:
                 new_tempo = self.sequencer.change_tempo(-1)
                 print(f"テンポ下げ: {new_tempo} BPM")
 
-        # トラック切り替え（[と]キー、またはパターン編集モード以外ではゲームパッドのLRボタン）
-        if self._is_key_pressed(pyxel.KEY_RIGHTBRACKET) or (
-            self._is_gamepad_button_pressed(pyxel.GAMEPAD1_BUTTON_RIGHTSHOULDER) and self.mode != self.MODE_PATTERN_EDIT
+        # トラック切り替え（[と]キー、またはゲームパッドのトリガー）
+        if self._is_key_pressed(pyxel.KEY_RIGHTBRACKET) or self._is_analog_triggered(
+            pyxel.GAMEPAD1_AXIS_TRIGGERRIGHT, pyxel.btnv(pyxel.GAMEPAD1_AXIS_TRIGGERRIGHT), self.ANALOG_THRESHOLD
         ):
-            # キーボードはすべてのモードで、ゲームパッドはパターン編集モード以外でトラック切り替え
             new_track = self.sequencer.change_track(1)
             print(f"トラック変更: {new_track}")
 
-        if self._is_key_pressed(pyxel.KEY_LEFTBRACKET) or (
-            self._is_gamepad_button_pressed(pyxel.GAMEPAD1_BUTTON_LEFTSHOULDER) and self.mode != self.MODE_PATTERN_EDIT
+        if self._is_key_pressed(pyxel.KEY_LEFTBRACKET) or self._is_analog_triggered(
+            pyxel.GAMEPAD1_AXIS_TRIGGERLEFT, pyxel.btnv(pyxel.GAMEPAD1_AXIS_TRIGGERLEFT), self.ANALOG_THRESHOLD
         ):
-            # キーボードはすべてのモードで、ゲームパッドはパターン編集モード以外でトラック切り替え
             new_track = self.sequencer.change_track(-1)
             print(f"トラック変更: {new_track}")
 
-        # パターン切り替え（,と.キー）
+        # パターン切り替え（,と.キー、またはゲームパッド右スティック上下）
         if self._is_key_pressed(pyxel.KEY_PERIOD):
             new_pattern = self.sequencer.change_pattern(1)
             print(f"パターン変更: {new_pattern}")
@@ -132,8 +117,18 @@ class InputManager:
             new_pattern = self.sequencer.change_pattern(-1)
             print(f"パターン変更: {new_pattern}")
 
-        # ソングモード切り替え（Sキー）
-        if self._is_key_pressed(pyxel.KEY_S):
+        # パターン切り替え - ゲームパッド右スティック上下
+        right_y = pyxel.btnv(pyxel.GAMEPAD1_AXIS_RIGHTY)
+        if self._is_analog_triggered(pyxel.GAMEPAD1_AXIS_RIGHTY, right_y, self.ANALOG_THRESHOLD):
+            if right_y > 0:  # 下
+                new_pattern = self.sequencer.change_pattern(-1)
+                print(f"パターン変更: {new_pattern}")
+            else:  # 上
+                new_pattern = self.sequencer.change_pattern(1)
+                print(f"パターン変更: {new_pattern}")
+
+        # ソングモード切り替え（SキーまたはゲームパッドのYボタン）
+        if self._is_key_pressed(pyxel.KEY_S) or self._is_gamepad_button_pressed(pyxel.GAMEPAD1_BUTTON_Y):
             song_mode = self.sequencer.toggle_song_mode()
             print(f"ソングモード: {'ON' if song_mode else 'OFF'}")
 
@@ -214,13 +209,17 @@ class InputManager:
             if len(self.sequencer.song_sequence) > 0:
                 self.song_edit_position = (self.song_edit_position + 1) % len(self.sequencer.song_sequence)
 
-        # パターン追加（Enterキー）
-        if self._is_key_pressed(pyxel.KEY_RETURN):
+        # パターン追加（EnterキーまたはゲームパッドのBボタン）
+        if self._is_key_pressed(pyxel.KEY_RETURN) or self._is_gamepad_button_pressed(pyxel.GAMEPAD1_BUTTON_B):
             self.sequencer.add_pattern_to_song(self.sequencer.current_pattern)
             print(f"パターン追加: {self.sequencer.current_pattern}")
 
-        # パターン削除（DELキー）
-        if self._is_key_pressed(pyxel.KEY_DELETE) or self._is_key_pressed(pyxel.KEY_BACKSPACE):
+        # パターン削除（DELキーまたはゲームパッドのXボタン）
+        if (
+            self._is_key_pressed(pyxel.KEY_DELETE)
+            or self._is_key_pressed(pyxel.KEY_BACKSPACE)
+            or self._is_gamepad_button_pressed(pyxel.GAMEPAD1_BUTTON_X)
+        ):
             if len(self.sequencer.song_sequence) > 0:
                 self.sequencer.remove_pattern_from_song(self.song_edit_position)
                 print(f"パターン削除: 位置 {self.song_edit_position}")

@@ -110,11 +110,11 @@ class PicoPixel:
         # テンポ表示
         pyxel.text(45, self.GRID_Y + self.GRID_HEIGHT + 20, f"Tempo: {self.sequencer.tempo}", self.COLOR_TEXT)
 
-        # 音色タイプ表示（パターン編集モードのみ）
-        if self.input_manager.mode == self.input_manager.MODE_PATTERN_EDIT:
-            sound_types = ["Triangle", "Square", "Pulse", "Noise"]
-            sound_type = sound_types[self.sequencer.current_sound_type]
-            pyxel.text(90, self.GRID_Y + self.GRID_HEIGHT + 20, f"Sound: {sound_type}", self.COLOR_TEXT)
+        # トラックごとの音色タイプ表示
+        sound_types = ["Triangle", "Square", "Pulse", "Noise"]
+        sound_type = sound_types[self.sequencer.current_track]
+        sound_color = self.TRACK_COLORS[self.sequencer.current_track]
+        pyxel.text(90, self.GRID_Y + self.GRID_HEIGHT + 20, f"Sound: {sound_type}", sound_color)
 
     def _draw_sequencer_grid(self):
         """シーケンサーグリッドの描画"""

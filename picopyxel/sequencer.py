@@ -48,6 +48,9 @@ class Sequencer:
     # パターン数
     PATTERN_COUNT = 16
 
+    # トラックごとの固定音色
+    TRACK_SOUND_TYPES = ["t", "s", "p", "n"]  # Triangle, Square, Pulse, Noise
+
     def __init__(self):
         """シーケンサーの初期化"""
         # 4トラック対応
@@ -82,11 +85,6 @@ class Sequencer:
         self.current_octave = 4
         # 現在選択中の音階（デフォルトはC）
         self.current_note = "C"
-        # 音色タイプ（0-3）
-        # 0: 三角波(Triangle)、1: 矩形波(Square)、2: パルス波(Pulse)、3: ノイズ(Noise)
-        self.sound_types = ["t", "s", "p", "n"]
-        # 現在選択中の音色インデックス
-        self.current_sound_type = 0
         # 全音階のリスト
         self.all_notes = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
 
@@ -156,15 +154,15 @@ class Sequencer:
                     # 音を消去
                     self.patterns[self.current_pattern][track_idx][step_idx] = None
                 else:
-                    # 現在選択中の音階を入力
+                    # 現在選択中の音階を入力（トラックごとに固定の音色を使用）
                     self.patterns[self.current_pattern][track_idx][step_idx] = (
                         self.current_note,
                         self.current_octave,
-                        self.current_sound_type,
+                        track_idx,  # トラックインデックスを音色タイプとして使用
                     )
             else:
-                # 指定された音階を入力
-                self.patterns[self.current_pattern][track_idx][step_idx] = (note, self.current_octave, self.current_sound_type)
+                # 指定された音階を入力（トラックごとに固定の音色を使用）
+                self.patterns[self.current_pattern][track_idx][step_idx] = (note, self.current_octave, track_idx)
 
     def play_current_step(self):
         """現在のステップの音を再生する"""
@@ -183,8 +181,8 @@ class Sequencer:
                     note_names = ["c", "c#", "d", "d#", "e", "f", "f#", "g", "g#", "a", "a#", "b"]
                     note_name = f"{note_names[pyxel_note]}{octave}"
 
-                    # 音色タイプを取得
-                    sound_type = self.sound_types[sound_type_idx]
+                    # トラックごとに固定の音色を使用
+                    sound_type = self.TRACK_SOUND_TYPES[track_idx]
 
                     # トラックの音量を取得
                     volume = str(self.track_volumes[track_idx])
@@ -301,15 +299,7 @@ class Sequencer:
         self.current_octave = max(self.MIN_OCTAVE, min(self.MAX_OCTAVE, self.current_octave + delta))
         return self.current_octave
 
-    def change_sound_type(self, delta):
-        """
-        音色タイプを変更する
-
-        Args:
-            delta: 変更量（+1または-1）
-        """
-        self.current_sound_type = (self.current_sound_type + delta) % len(self.sound_types)
-        return self.current_sound_type, self.sound_types[self.current_sound_type]
+    # 音色タイプはトラックごとに固定されるため、この関数は不要になります
 
     def change_note(self, delta):
         """
