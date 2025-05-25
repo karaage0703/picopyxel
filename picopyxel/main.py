@@ -1,5 +1,6 @@
 """
 picopyxel - 8bitスタイルの音楽シーケンサー
+バージョン2.0: 4トラック、パターン管理、ソングモード対応
 """
 
 import pyxel
@@ -19,7 +20,7 @@ class PicoPixel:
         self.HEIGHT = 120
 
         # Pyxel初期化
-        pyxel.init(self.WIDTH, self.HEIGHT, title="PicoPixel", fps=30)
+        pyxel.init(self.WIDTH, self.HEIGHT, title="PicoPixel v2.0", fps=30)
 
         # シーケンサーとインプットマネージャーの初期化
         self.sequencer = Sequencer()
@@ -32,6 +33,9 @@ class PicoPixel:
         self.COLOR_STEP = 8  # ステップ色（灰色）
         self.COLOR_ACTIVE = 11  # アクティブステップ色（水色）
         self.COLOR_NOTE = 10  # 音符色（緑）
+
+        # トラック色
+        self.TRACK_COLORS = [10, 9, 8, 12]  # 緑、オレンジ、灰色、青
 
         # グリッド設定
         self.GRID_X = 10
@@ -46,8 +50,8 @@ class PicoPixel:
 
     def update(self):
         """状態更新（毎フレーム呼び出し）"""
-        # 終了判定（ESCキーまたはSTARTボタン）
-        if pyxel.btnp(pyxel.KEY_ESCAPE) or pyxel.btnp(pyxel.GAMEPAD1_BUTTON_START):
+        # 終了判定（ESCキーまたはSTARTボタン長押し）
+        if pyxel.btnp(pyxel.KEY_ESCAPE) or (pyxel.btn(pyxel.GAMEPAD1_BUTTON_START) and pyxel.btn(pyxel.GAMEPAD1_BUTTON_BACK)):
             pyxel.quit()
 
         # 入力処理
@@ -62,32 +66,55 @@ class PicoPixel:
         pyxel.cls(self.COLOR_BG)
 
         # タイトル描画
-        # タイトルのみ表示
-        pyxel.text(5, 5, "PicoPixel - 8bit Music Sequencer", self.COLOR_TEXT)
+        pyxel.text(5, 5, "PicoPixel v2.0 - 8bit Music Sequencer", self.COLOR_TEXT)
 
-        # シーケンサーグリッド描画
-        self._draw_sequencer_grid()
+        # 現在のモードを表示
+        mode_names = ["Pattern Edit", "Song Edit", "Track Settings"]
+        mode_name = mode_names[self.input_manager.mode]
+        pyxel.text(5, 15, f"Mode: {mode_name}", self.COLOR_TEXT)
 
+        # 現在のパターン番号を表示
+        pyxel.text(80, 15, f"Pattern: {self.sequencer.current_pattern + 1}", self.COLOR_TEXT)
+
+        # 現在のトラック番号を表示
+        track_color = self.TRACK_COLORS[self.sequencer.current_track]
+        pyxel.text(125, 15, f"Track: {self.sequencer.current_track + 1}", track_color)
+
+        # モードに応じた描画
+        if self.input_manager.mode == self.input_manager.MODE_PATTERN_EDIT:
+            # シーケンサーグリッド描画
+            self._draw_sequencer_grid()
+        elif self.input_manager.mode == self.input_manager.MODE_SONG_EDIT:
+            # ソングシーケンス描画
+            self._draw_song_sequence()
+        elif self.input_manager.mode == self.input_manager.MODE_TRACK_SETTINGS:
+            # トラック設定描画
+            self._draw_track_settings()
+
+        # 共通情報表示
         # 再生状態表示
         status = "PLAYING" if self.sequencer.playing else "STOPPED"
-        pyxel.text(5, self.GRID_Y + self.GRID_HEIGHT + 10, f"Status: {status}", self.COLOR_TEXT)
+        song_mode = " (SONG)" if self.sequencer.song_mode else " (PATTERN)"
+        pyxel.text(5, self.GRID_Y + self.GRID_HEIGHT + 4, f"Status: {status}{song_mode}", self.COLOR_TEXT)
 
-        # 選択中のステップ表示
-        pyxel.text(70, self.GRID_Y + self.GRID_HEIGHT + 10, f"Step: {self.input_manager.selected_step + 1}", self.COLOR_TEXT)
-
-        # 現在選択中の音階表示
-        pyxel.text(110, self.GRID_Y + self.GRID_HEIGHT + 10, f"Note: {self.sequencer.current_note}", self.COLOR_TEXT)
-
-        # オクターブ表示
-        pyxel.text(5, self.GRID_Y + self.GRID_HEIGHT + 20, f"Oct: {self.sequencer.current_octave}", self.COLOR_TEXT)
+        # 選択中のステップ表示（パターン編集モードのみ）
+        if self.input_manager.mode == self.input_manager.MODE_PATTERN_EDIT:
+            pyxel.text(
+                5, self.GRID_Y + self.GRID_HEIGHT + 12, f"Step: {self.input_manager.selected_step + 1}", self.COLOR_TEXT
+            )
+            # 現在選択中の音階表示
+            pyxel.text(45, self.GRID_Y + self.GRID_HEIGHT + 12, f"Note: {self.sequencer.current_note}", self.COLOR_TEXT)
+            # オクターブ表示
+            pyxel.text(5, self.GRID_Y + self.GRID_HEIGHT + 20, f"Oct: {self.sequencer.current_octave}", self.COLOR_TEXT)
 
         # テンポ表示
         pyxel.text(45, self.GRID_Y + self.GRID_HEIGHT + 20, f"Tempo: {self.sequencer.tempo}", self.COLOR_TEXT)
 
-        # 音色タイプ表示
+        # トラックごとの音色タイプ表示
         sound_types = ["Triangle", "Square", "Pulse", "Noise"]
-        sound_type = sound_types[self.sequencer.current_sound_type]
-        pyxel.text(110, self.GRID_Y + self.GRID_HEIGHT + 20, f"Sound: {sound_type}", self.COLOR_TEXT)
+        sound_type = sound_types[self.sequencer.current_track]
+        sound_color = self.TRACK_COLORS[self.sequencer.current_track]
+        pyxel.text(90, self.GRID_Y + self.GRID_HEIGHT + 20, f"Sound: {sound_type}", sound_color)
 
     def _draw_sequencer_grid(self):
         """シーケンサーグリッドの描画"""
@@ -126,19 +153,105 @@ class PicoPixel:
                 # セル描画
                 pyxel.rect(cell_x, cell_y, self.CELL_WIDTH - 1, self.CELL_HEIGHT - 1, cell_color)
 
-                # 音符があれば描画
-                step_data = self.sequencer.steps[x]
-                if step_data is not None:
-                    note, octave, sound_type = step_data
+                # 音符があれば描画（全トラック）
+                for track_idx in range(self.sequencer.TRACK_COUNT):
+                    step_data = self.sequencer.patterns[self.sequencer.current_pattern][track_idx][x]
+                    if step_data is not None:
+                        note, octave, sound_type = step_data
+                        note_names = ["B", "A#", "A", "G#", "G", "F#", "F", "E", "D#", "D", "C#", "C"]
 
-                    # 音階が一致するか確認（オクターブは考慮しない）
-                    if note == note_names[y]:
-                        # 音色タイプに応じて色を変える
-                        note_color = self.COLOR_NOTE + sound_type
-                        pyxel.rect(cell_x + 1, cell_y + 1, self.CELL_WIDTH - 3, self.CELL_HEIGHT * 8 / 12 - 3, note_color)
+                        # 音階が一致するか確認（オクターブは考慮しない）
+                        if note == note_names[y]:
+                            # 音色タイプに応じた色を使用
+                            sound_colors = [11, 10, 9, 8]  # 水色、緑、オレンジ、灰色
+                            note_color = sound_colors[sound_type]
 
-                        # オクターブ表示（小さい数字）
-                        pyxel.text(cell_x + 2, cell_y + 2, str(octave), self.COLOR_TEXT)
+                            # 現在のトラックの音符は少し大きく表示
+                            if track_idx == self.sequencer.current_track:
+                                pyxel.rect(
+                                    cell_x + 1, cell_y + 1, self.CELL_WIDTH - 3, self.CELL_HEIGHT * 8 / 12 - 3, note_color
+                                )
+                                # オクターブ表示（小さい数字）
+                                pyxel.text(cell_x + 2, cell_y + 2, str(octave), self.COLOR_TEXT)
+                            else:
+                                # 他のトラックの音符は小さく表示
+                                pyxel.rect(
+                                    cell_x + 2, cell_y + 2, self.CELL_WIDTH - 5, self.CELL_HEIGHT * 8 / 12 - 5, note_color
+                                )
+
+    def _draw_song_sequence(self):
+        """ソングシーケンスの描画"""
+        # ソングシーケンスの背景
+        pyxel.rectb(self.GRID_X - 1, self.GRID_Y - 1, self.GRID_WIDTH + 2, 20, self.COLOR_GRID)
+
+        # ソングシーケンスのタイトル
+        pyxel.text(self.GRID_X, self.GRID_Y - 8, "Song Sequence", self.COLOR_TEXT)
+
+        # ソングシーケンスの内容
+        if not self.sequencer.song_sequence:
+            pyxel.text(self.GRID_X + 5, self.GRID_Y + 5, "No patterns in song", self.COLOR_TEXT)
+        else:
+            # 最大16パターンまで表示
+            display_count = min(16, len(self.sequencer.song_sequence))
+            for i in range(display_count):
+                pattern_idx = self.sequencer.song_sequence[i]
+
+                # 位置計算
+                pos_x = self.GRID_X + (i % 8) * 18
+                pos_y = self.GRID_Y + (i // 8) * 10
+
+                # 背景色（選択中の位置は強調）
+                bg_color = self.COLOR_ACTIVE if i == self.input_manager.song_edit_position else self.COLOR_BG
+                pyxel.rect(pos_x, pos_y, 16, 8, bg_color)
+
+                # パターン番号表示
+                pyxel.text(pos_x + 2, pos_y + 1, f"P{pattern_idx + 1}", self.COLOR_TEXT)
+
+                # 現在再生中のパターンをマーク
+                if self.sequencer.playing and self.sequencer.song_mode and i == self.sequencer.song_position:
+                    pyxel.rectb(pos_x - 1, pos_y - 1, 18, 10, self.COLOR_NOTE)
+
+        # 操作ガイド
+        pyxel.text(self.GRID_X, self.GRID_Y + 25, "Enter: Add pattern", self.COLOR_TEXT)
+        pyxel.text(self.GRID_X, self.GRID_Y + 35, "Del: Remove pattern", self.COLOR_TEXT)
+        pyxel.text(self.GRID_X, self.GRID_Y + 45, "Ctrl+D: Clear all", self.COLOR_TEXT)
+
+    def _draw_track_settings(self):
+        """トラック設定の描画"""
+        # トラック設定の背景
+        pyxel.rectb(self.GRID_X - 1, self.GRID_Y - 1, self.GRID_WIDTH + 2, 50, self.COLOR_GRID)
+
+        # トラック設定のタイトル
+        pyxel.text(self.GRID_X, self.GRID_Y - 8, "Track Settings", self.COLOR_TEXT)
+
+        # 各トラックの設定を表示
+        for i in range(self.sequencer.TRACK_COUNT):
+            # 位置計算
+            pos_x = self.GRID_X + 5
+            pos_y = self.GRID_Y + i * 10 + 5
+
+            # トラック番号と色
+            track_color = self.TRACK_COLORS[i]
+
+            # 背景色（現在選択中のトラックは強調）
+            bg_color = self.COLOR_ACTIVE if i == self.sequencer.current_track else self.COLOR_BG
+            pyxel.rect(pos_x - 2, pos_y - 2, self.GRID_WIDTH - 6, 10, bg_color)
+
+            # トラック情報表示
+            pyxel.text(pos_x, pos_y, f"Track {i + 1}", track_color)
+
+            # 音量バー
+            volume = self.sequencer.track_volumes[i]
+            pyxel.text(pos_x + 50, pos_y, f"Volume: {volume}", self.COLOR_TEXT)
+
+            # 音量バーの描画
+            bar_x = pos_x + 100
+            bar_width = volume * 5  # 0-7の音量を視覚化
+            pyxel.rect(bar_x, pos_y, bar_width, 5, track_color)
+            pyxel.rectb(bar_x - 1, pos_y - 1, 36, 7, self.COLOR_GRID)
+
+        # 操作ガイド
+        pyxel.text(self.GRID_X, self.GRID_Y + 45, "Up/Down: Adjust volume", self.COLOR_TEXT)
 
 
 if __name__ == "__main__":

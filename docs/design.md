@@ -24,12 +24,17 @@
 - 再生・停止機能
 - テンポ変更機能（60-240 BPM）
 
-#### 1.3.2 将来的な拡張予定機能
-- マルチトラック対応（最大4トラック）
+#### 1.3.2 バージョン2.0機能（今回の実装）
+- 4トラック構成（同時に4つの音を鳴らせる）
+- トラック切り替え機能
+- トラックごとの音量調整
+- ソングモード（複数のパターンを組み合わせて曲を作成）
+- パターン管理（最大16パターン）
+- パターンチェイン（パターンの連続再生）
+
+#### 1.3.3 将来的な拡張予定機能
 - 音色パラメータ詳細設定機能
 - エフェクト追加（ビブラート、ピッチシフトなど）
-- パターンエディット／パターンチェイン
-- ソングモード（曲構成管理）
 - セーブ／ロード機能（ローカルファイル保存）
 - 実機最適化（ボタン配置チューニング）
 - UI改善（視認性・操作性向上）
@@ -82,11 +87,31 @@
 
 #### 2.2.2 クラス設計
 
-##### Sequencerクラス
+##### Sequencerクラス（更新版）
 ```python
 class Sequencer:
     def __init__(self):
-        self.steps = [None for _ in range(16)]  # (音階, オクターブ, 音色) のタプル
+        # 4トラック対応
+        self.tracks = [
+            [None for _ in range(16)] for _ in range(4)  # 各トラック16ステップ
+        ]
+        self.track_volumes = [5, 5, 5, 5]  # 各トラックの音量（0-7）
+        self.current_track = 0  # 現在編集中のトラック
+
+        # パターン管理
+        self.patterns = [
+            [
+                [None for _ in range(16)] for _ in range(4)
+            ] for _ in range(16)  # 最大16パターン
+        ]
+        self.current_pattern = 0  # 現在編集中のパターン
+
+        # ソングモード
+        self.song_sequence = []  # パターン番号のリスト
+        self.song_position = 0  # 現在再生中のソング位置
+        self.song_mode = False  # ソングモード（True）かパターンモード（False）か
+
+        # 基本パラメータ
         self.current_step = 0
         self.playing = False
         self.tempo = 120  # BPM
@@ -102,8 +127,36 @@ class Sequencer:
         # 再生/停止を切り替える
         pass
 
-    def input_note(self, step_idx, note=None):
-        # 指定したステップに音階を入力する
+    def input_note(self, step_idx, track_idx=None, note=None):
+        # 指定したステップとトラックに音階を入力する
+        pass
+
+    def change_track(self, delta):
+        # 編集するトラックを変更する
+        pass
+
+    def change_track_volume(self, delta):
+        # 現在のトラックの音量を変更する
+        pass
+
+    def change_pattern(self, delta):
+        # 編集するパターンを変更する
+        pass
+
+    def copy_pattern(self, source, destination):
+        # パターンをコピーする
+        pass
+
+    def add_pattern_to_song(self, pattern_idx):
+        # ソングにパターンを追加する
+        pass
+
+    def remove_pattern_from_song(self, position):
+        # ソングからパターンを削除する
+        pass
+
+    def toggle_song_mode(self):
+        # ソングモードとパターンモードを切り替える
         pass
 
     def change_octave(self, delta):
@@ -123,21 +176,30 @@ class Sequencer:
         pass
 ```
 
-##### InputManagerクラス
+##### InputManagerクラス（更新版）
 ```python
 class InputManager:
     def __init__(self, sequencer):
         self.sequencer = sequencer
         self.selected_step = 0
-        self.mode = 0  # 編集モード
+        self.mode = 0  # 0: パターン編集、1: ソング編集、2: トラック設定
         self.using_gamepad = False  # ゲームパッド使用フラグ
+        self.song_edit_position = 0  # ソング編集時の位置
 
     def update(self):
         # 入力状態を更新する
         pass
 
-    def _handle_edit_mode(self):
-        # 編集モードの入力処理
+    def _handle_pattern_edit_mode(self):
+        # パターン編集モードの入力処理
+        pass
+
+    def _handle_song_edit_mode(self):
+        # ソング編集モードの入力処理
+        pass
+
+    def _handle_track_settings_mode(self):
+        # トラック設定モードの入力処理
         pass
 
     def _is_key_pressed(self, key):
@@ -155,9 +217,10 @@ class InputManager:
 
 #### 2.2.3 データフロー
 1. 入力取得
-2. シーケンスデータ更新
-3. 再生時ステップ進行
-4. 画面描画
+2. モード判定（パターン編集/ソング編集/トラック設定）
+3. シーケンスデータ更新
+4. 再生時ステップ進行（パターンモード/ソングモード）
+5. 画面描画
 
 #### 2.2.4 エラーハンドリング
 - 入力ミス
@@ -165,9 +228,14 @@ class InputManager:
 
 ### 2.3 インターフェース設計
 - 16ステップ×12音階表示
+- 4トラック表示（色分け）
 - 現在再生位置ハイライト
 - 現在選択中の音階ハイライト
+- 現在選択中のトラックハイライト
+- パターン番号表示
+- ソングシーケンス表示（ソングモード時）
 - 再生状態、選択中のステップ、オクターブ、テンポ、音色タイプ表示
+- モード表示（パターン編集/ソング編集/トラック設定）
 
 ### 2.4 セキュリティ設計
 - 異常時でもクラッシュしない作り
